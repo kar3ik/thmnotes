@@ -1,0 +1,46 @@
+https://github.com/infosecn1nja/Red-Teaming-Toolkit#Payload%20Development
+
+
+
+password cracking
+-----------------
+
+hashcat -a 0 -m 100 8d6e34f987851aa599257d3831a1af040886842f /path/to/wordlist.txt
+
+
+Explanation:
+-a 0 = dictionary attack mode
+
+-m 100 = hash mode for SHA-1
+
+8d6e34f987851aa599257d3831a1af040886842f = the target SHA-1 hash
+
+/path/to/wordlist.txt = path to your wordlist file (replace with your actual wordlist, e.g., /usr/share/wordlists/rockyou.txt)
+
+hashcat -a 3 -m 0 e48e13207341b6bffb7fb1622282247b ?d?d?d?d
+
+Explanation:
+-a 3 sets brute-force attack mode.
+
+-m 0 specifies the hash type MD5.
+
+e48e13207341b6bffb7fb1622282247b is the target hash.
+
+?d?d?d?d tells hashcat to try all 4-digit combinations from 0000 to 9999.
+
+network enumeration after initial access
+-----------------------------------------
+
+cmd > netstat -na 
+
+cmd > arp -a 
+
+cmd > systeminfo | findstr Domain
+
+
+AV enumeration
+--------------
+
+Installed services and applications
+-----------------------------------
+powershell > wmic product get name,version

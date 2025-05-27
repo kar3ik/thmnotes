@@ -1,0 +1,61 @@
+try hack me red teaming
+-----------------------
+
+
+Initial Access
+--------------
+
+https://tryhackme.com/room/redteamrecon
+https://tryhackme.com/room/weaponization
+https://tryhackme.com/room/passwordattacks
+https://tryhackme.com/room/phishingyl
+
+
+Post Compromise
+---------------
+
+https://tryhackme.com/room/thelayoftheland
+https://tryhackme.com/room/enumerationpe
+https://tryhackme.com/room/windowsprivesc20
+https://tryhackme.com/room/windowslocalpersistence
+https://tryhackme.com/room/lateralmovementandpivoting
+https://tryhackme.com/room/dataxexfilt
+
+
+https://tryhackme.com/room/linprivesc
+
+Host Evasions
+--------------
+
+https://tryhackme.com/room/windowsinternals
+https://tryhackme.com/room/windowsapi
+https://tryhackme.com/room/abusingwindowsinternals
+https://tryhackme.com/room/introtoav
+https://tryhackme.com/room/avevasionshellcode
+https://tryhackme.com/room/obfuscationprinciples
+https://tryhackme.com/room/signatureevasion
+https://tryhackme.com/room/bypassinguac
+https://tryhackme.com/room/runtimedetectionevasion
+https://tryhackme.com/room/monitoringevasion
+https://tryhackme.com/room/livingofftheland
+
+Network Security Evasion
+-------------------------
+
+https://tryhackme.com/room/redteamnetsec
+https://tryhackme.com/room/redteamfirewalls
+https://tryhackme.com/room/sandboxevasion
+
+Compromising Active Directory
+-----------------------------
+
+https://tryhackme.com/room/winadbasics
+https://tryhackme.com/room/breachingad
+https://tryhackme.com/room/adenumeration
+https://tryhackme.com/room/lateralmovementandpivoting
+https://tryhackme.com/room/exploitingad
+https://tryhackme.com/room/persistingad
+https://tryhackme.com/room/credharvesting
+
+
+
